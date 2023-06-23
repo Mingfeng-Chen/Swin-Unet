@@ -16,6 +16,6 @@ class Dataset(Dataset):
             return 0
 
     def __getitem__(self, idx):
-        input_data = torch.tensor(np.load(self.in_dir))
-        output_data = torch.tensor(np.load(self.out_dir))
+        input_data = torch.FloatTensor(np.load(self.in_dir)[idx,:,:,:])
+        output_data = torch.FloatTensor(np.load(self.out_dir)[idx,:,:,:])
         return input_data, output_data

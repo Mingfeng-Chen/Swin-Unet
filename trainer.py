@@ -32,13 +32,14 @@ def trainer_synapse(args, model, snapshot_path):
     def worker_init_fn(worker_id):
         random.seed(args.seed + worker_id)
 
-    trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True,
+    trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True,
                              worker_init_fn=worker_init_fn)
     if args.n_gpu > 1:
         model = nn.DataParallel(model)
     model.train()
-    ce_loss = CrossEntropyLoss()
-    dice_loss = DiceLoss(num_classes)
+    #ce_loss = CrossEntropyLoss()
+    #dice_loss = DiceLoss(num_classes)
+    mse_loss = nn.MSELoss()
     optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
     writer = SummaryWriter(snapshot_path + '/log')
     iter_num = 0
@@ -48,12 +49,13 @@ def trainer_synapse(args, model, snapshot_path):
     best_performance = 0.0
     iterator = tqdm(range(max_epoch), ncols=70)
     for epoch_num in iterator:
-        for input_data, output_data in enumerate(trainloader):
+        for index, (input_data, output_data) in enumerate(trainloader):
             input_data, output_data = input_data.cuda(), output_data.cuda()
             pred_data = model(input_data)
-            loss_ce = ce_loss(output_data, pred_data)
-            loss_dice = dice_loss(output_data, pred_data, softmax=True)
-            loss = 0.4 * loss_ce + 0.6 * loss_dice
+            #loss_ce = ce_loss(output_data, pred_data)
+            #loss_dice = dice_loss(output_data, pred_data, softmax=True)
+            #loss = 0.4 * loss_ce + 0.6 * loss_dice
+            loss = mse_loss(pred_data, output_data)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -64,9 +66,9 @@ def trainer_synapse(args, model, snapshot_path):
             iter_num = iter_num + 1
             writer.add_scalar('info/lr', lr_, iter_num)
             writer.add_scalar('info/total_loss', loss, iter_num)
-            writer.add_scalar('info/loss_ce', loss_ce, iter_num)
+            #writer.add_scalar('info/loss_ce', loss_ce, iter_num)
 
-            logging.info('iteration %d : loss : %f, loss_ce: %f' % (iter_num, loss.item(), loss_ce.item()))
+            logging.info('iteration %d : loss : %f' % (iter_num, loss.item()))
 
             if iter_num % 20 == 0:
                 print(iter_num)
