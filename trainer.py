@@ -26,7 +26,7 @@ def trainer_synapse(args, model, snapshot_path):
     num_classes = args.num_classes
     batch_size = args.batch_size * args.n_gpu
     # max_iterations = args.max_iterations
-    db_train = Dataset(in_dir="/dataset/X_train_fringe_resize.npy", out_dir="/dataset/Z_train_resize.npy")
+    db_train = Dataset(in_dir="datasets/X_train_fringe_resize.npy", out_dir="datasets/Z_train_resize.npy")
     print("The length of train set is: {}".format(db_train.__len__()))
 
     def worker_init_fn(worker_id):
